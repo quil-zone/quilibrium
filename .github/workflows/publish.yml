@@ -49,6 +49,9 @@ jobs:
           -
             os: macos-latest
             arch: amd64
+          -
+            os: ubuntu-latest
+            arch: arm64
     runs-on: ${{ matrix.os }}
     env:
       CARGO_TERM_COLOR: always
@@ -74,17 +77,22 @@ jobs:
             echo "::error file={name},line={line},endLine={endLine},title={title}::{message}"
             exit 1
           fi
-      -
-        name: linux arm64 cross compiler setup
-        if: (matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64')
-        run: |
-          sudo apt-get install gcc-aarch64-linux-gnu
-          rustup target add aarch64-unknown-linux-musl
-          echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          echo "CC_FOR_TARGET=gcc-aarch64-linux-gnu" >> $GITHUB_ENV
-          echo "CC_aarch64_unknown_linux_musl=aarch64-linux-musl-gcc" >> $GITHUB_ENV
-          echo "AR_aarch64_unknown_linux_musl=aarch64-linux-musl-ar" >> $GITHUB_ENV
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS='-Clink-self-contained=yes -Clinker=rust-lld'" >> $GITHUB_ENV
+      #-
+      #  name: linux arm64 cross compiler setup
+      #  if: (matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64')
+      #  run: |
+      #    sudo apt-get install -y \
+      #      clang \
+      #      gcc-aarch64-linux-gnu \
+      #      musl-tools \
+      #      llvm
+      #    rustup target add aarch64-unknown-linux-musl
+      #    echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+      #    echo "CC_FOR_TARGET=gcc-aarch64-linux-gnu" >> $GITHUB_ENV
+      #    echo "CC_aarch64_unknown_linux_musl=aarch64-linux-musl-gcc" >> $GITHUB_ENV
+      #    echo "AR_aarch64_unknown_linux_musl=aarch64-linux-musl-ar" >> $GITHUB_ENV
+      #    echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+      #    echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS='-Clink-self-contained=yes -Clinker=rust-lld'" >> $GITHUB_ENV
       -
         name: go setup
         uses: actions/setup-go@v5
