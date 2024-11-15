@@ -1,0 +1,39 @@
+name: sync
+on:
+  schedule:
+    -
+      cron: '* * * *'
+  workflow_dispatch:
+    inputs:
+      sync_test_mode:
+        description: fork sync test mode
+        type: boolean
+        default: false
+jobs:
+  sync_latest_from_upstream:
+    runs-on: ubuntu-latest
+    name: sync latest commits from upstream repo
+    steps:
+      -
+        name: checkout target repo
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          persist-credentials: false
+      -
+        name: sync upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
+        with:
+          target_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          upstream_sync_branch: main
+          upstream_sync_repo: QuilibriumNetwork/ceremonyclient
+      -
+        if: steps.sync.outputs.has_new_commits == 'true'
+        run: echo "new commits were found to sync."
+      -
+        if: steps.sync.outputs.has_new_commits == 'false'
+        run: echo "no new commits were found to sync."
+      -
+        run: echo "commits found: ${{ steps.sync.outputs.has_new_commits }}."
