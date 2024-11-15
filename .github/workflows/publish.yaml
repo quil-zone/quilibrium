@@ -33,7 +33,7 @@ jobs:
           if [ "${GIT_TAG}" = "v${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}" ]; then
             echo "git tag: ${GIT_TAG}"
             echo "short git sha: ${SHORT_GIT_SHA}"
-            echo "quilibrim version: ${QUILIBRIUM_VERSION}"
+            echo "quilibrium version: ${QUILIBRIUM_VERSION}"
           else
             echo "version in node/config/version.go (${QUILIBRIUM_VERSION}) does not match tag (${GIT_TAG})"
             echo "::error file={name},line={line},endLine={endLine},title={title}::{message}"
@@ -110,6 +110,10 @@ jobs:
           pushd ${GITHUB_WORKSPACE}/node
           go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
           openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
+      -
+        name: debug build
+        run: |
+          ls -ahl ${GITHUB_WORKSPACE}
       - name: publish
         uses: softprops/action-gh-release@v2
         with:
