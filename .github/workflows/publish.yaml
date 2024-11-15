@@ -108,8 +108,8 @@ jobs:
         name: node build
         env:
           CGO_ENABLED: 1
-          GOARCH=${{ matrix.arch }}
-          GOOS=${{ matrix.goos }}
+          GOARCH: ${{ matrix.arch }}
+          GOOS: ${{ matrix.goos }}
         run: |
           pushd ${GITHUB_WORKSPACE}/node
           go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
