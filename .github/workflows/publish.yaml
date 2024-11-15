@@ -7,6 +7,8 @@ on:
 jobs:
   artifact-build:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -79,13 +81,11 @@ jobs:
         run: |
           pushd ${GITHUB_WORKSPACE}/crates/bls48581
           uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/bls48581/src/lib.udl -o ${GITHUB_WORKSPACE}/bls48581/generated
-          pushd ${GITHUB_WORKSPACE}
       -
         name: vdf go bindings generation
         run: |
           pushd ${GITHUB_WORKSPACE}/crates/vdf
           uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/vdf/src/lib.udl -o ${GITHUB_WORKSPACE}/vdf/generated
-          pushd ${GITHUB_WORKSPACE}
       -
         name: node build for macos
         if: matrix.os == 'macos-latest'
@@ -95,7 +95,6 @@ jobs:
           pushd ${GITHUB_WORKSPACE}/node
           go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -lvdf -lbls48581 -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64
           openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64
-          pushd ${GITHUB_WORKSPACE}
       -
         name: node build for ubuntu
         if: matrix.os == 'ubuntu-latest'
@@ -105,13 +104,8 @@ jobs:
           pushd ${GITHUB_WORKSPACE}/node
           go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
           openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
-          pushd ${GITHUB_WORKSPACE}
       - name: publish
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            quilibrium-${GIT_TAG}-darwin-arm64
-            quilibrium-${GIT_TAG}-darwin-arm64.dgst
-            quilibrium-${GIT_TAG}-linux-amd64
-            quilibrium-${GIT_TAG}-linux-amd64.dgst
+          files: ${GITHUB_WORKSPACE}/quilibrium-*
           prerelease: true
