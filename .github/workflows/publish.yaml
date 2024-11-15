@@ -61,9 +61,28 @@ jobs:
           cargo build --package vdf --release
           cargo build --package bls48581 --release
       -
-        name: go bindings generation
+        name: bls48581 go bindings generation
+        run: |
+          pushd ${GITHUB_WORKSPACE}/crates/bls48581
+          uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/bls48581/src/lib.udl -o ${GITHUB_WORKSPACE}/bls48581/generated
+      -
+        name: vdf go bindings generation
         run: |
           pushd ${GITHUB_WORKSPACE}/crates/vdf
-          pushd ${GITHUB_WORKSPACE}/crates/bls48581
           uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/vdf/src/lib.udl -o ${GITHUB_WORKSPACE}/vdf/generated
-          uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/bls48581/src/lib.udl -o ${GITHUB_WORKSPACE}/bls48581/generated
+      -
+        name: node build for macos
+        if: matrix.os == 'macos-latest'
+        env:
+          CGO_ENABLED: 1
+        run: |
+          pushd ${GITHUB_WORKSPACE}/node
+          go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -lvdf -lbls48581 -ldl -lm'"
+      -
+        name: node build for ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          CGO_ENABLED: 1
+        run: |
+          pushd ${GITHUB_WORKSPACE}/node
+          go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm'"
