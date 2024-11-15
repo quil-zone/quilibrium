@@ -1,7 +1,9 @@
 ---
 name: publish
 on:
-  - push
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+(-[0-9a-f]{7})?'
 jobs:
   artifact-build:
     runs-on: ${{ matrix.os }}
@@ -20,14 +22,15 @@ jobs:
       -
         name: read version
         run: |
+          echo "GIT_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "SHORT_GIT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)" >> $GITHUB_ENV
           echo "QUILIBRIUM_VERSION=$(cat ${GITHUB_WORKSPACE}/node/config/version.go | grep -A 1 'func GetVersion() \[\]byte {' | grep -Eo '0x[0-9a-fA-F]+' | xargs printf '%d.%d.%d')" >> $GITHUB_ENV
       -
         name: log version
         run: |
+          echo "git tag: ${GIT_TAG}"
           echo "short git sha: ${SHORT_GIT_SHA}"
           echo "quilibrim version: ${QUILIBRIUM_VERSION}"
-        
       -
         name: go setup
         uses: actions/setup-go@v5
@@ -88,8 +91,8 @@ jobs:
           CGO_ENABLED: 1
         run: |
           pushd ${GITHUB_WORKSPACE}/node
-          go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -lvdf -lbls48581 -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-darwin-arm64
-          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-darwin-arm64.dgst ${GITHUB_WORKSPACE}/quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-darwin-arm64
+          go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -lvdf -lbls48581 -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64
+          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64
       -
         name: node build for ubuntu
         if: matrix.os == 'ubuntu-latest'
@@ -97,13 +100,13 @@ jobs:
           CGO_ENABLED: 1
         run: |
           pushd ${GITHUB_WORKSPACE}/node
-          go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-linux-amd64
-          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-linux-amd64.dgst ${GITHUB_WORKSPACE}/quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-linux-amd64
+          go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
+          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
       - name: publish
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-darwin-arm64
-            quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-darwin-arm64.dgst
-            quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-linux-amd64
-            quilibrium-${QUILIBRIUM_VERSION}-${SHORT_GIT_SHA}-linux-amd64.dgst
+            quilibrium-${GIT_TAG}-darwin-arm64
+            quilibrium-${GIT_TAG}-darwin-arm64.dgst
+            quilibrium-${GIT_TAG}-linux-amd64
+            quilibrium-${GIT_TAG}-linux-amd64.dgst
