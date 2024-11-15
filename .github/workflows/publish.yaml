@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: create Release
+        name: create release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
@@ -20,7 +20,7 @@ jobs:
           generate_release_notes: false
   artifact-build:
     name: artifact build
-    needs: create_release
+    needs: create-release
     permissions:
       contents: write
     strategy:
