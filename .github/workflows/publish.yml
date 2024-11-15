@@ -45,16 +45,6 @@ jobs:
             goos: linux
             extldflags: -L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm
             rustflags: -L /usr/lib/x86_64-linux-gnu
-          -
-            os: ubuntu-latest
-            arch: arm64
-            go_arch_setup: |
-              export CC=aarch64-linux-gnu-gcc
-              export CC_FOR_TARGET=gcc-aarch64-linux-gnu
-            rust_arch_setup: |
-              export CC_aarch64_unknown_linux_musl=aarch64-linux-musl-gcc
-              export AR_aarch64_unknown_linux_musl=aarch64-linux-musl-ar
-              export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
         exclude:
           -
             os: macos-latest
@@ -85,6 +75,16 @@ jobs:
             exit 1
           fi
       -
+        name: linux arm64 cross compiler setup
+        if: (matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64')
+        run: |
+          rustup target add aarch64-unknown-linux-musl
+          echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=gcc-aarch64-linux-gnu" >> $GITHUB_ENV
+          echo "CC_aarch64_unknown_linux_musl=aarch64-linux-musl-gcc" >> $GITHUB_ENV
+          echo "AR_aarch64_unknown_linux_musl=aarch64-linux-musl-ar" >> $GITHUB_ENV
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS='-Clink-self-contained=yes -Clinker=rust-lld'" >> $GITHUB_ENV
+      -
         name: go setup
         uses: actions/setup-go@v5
         with:
@@ -93,7 +93,6 @@ jobs:
         name: dependency setup
         run: |
           go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.1
-          rustup target add aarch64-unknown-linux-musl
           cargo install \
             uniffi-bindgen-go \
             --git https://github.com/NordSecurity/uniffi-bindgen-go \
@@ -103,7 +102,6 @@ jobs:
         env:
           RUSTFLAGS: ${{ matrix.rustflags }}
         run: |
-          ${{ matrix.rust_arch_setup }} 
           for crate in bls48581 vdf; do
             cargo build --package ${crate} --release
             pushd ${GITHUB_WORKSPACE}/crates/${crate}
@@ -117,7 +115,6 @@ jobs:
           GOOS: ${{ matrix.goos }}
         run: |
           pushd ${GITHUB_WORKSPACE}/node
-          ${{ matrix.go_arch_setup }} 
           go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
       -
         name: create digests
