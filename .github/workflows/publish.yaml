@@ -63,7 +63,7 @@ jobs:
       -
         name: go bindings generation
         run: |
-          pushd ./crates/vdf
-          pushd ./crates/bls48581
-          uniffi-bindgen-go ./crates/vdf/src/lib.udl -o ./vdf/generated
-          uniffi-bindgen-go ./crates/bls48581/src/lib.udl -o ./bls48581/generated
+          pushd ${GITHUB_WORKSPACE}/crates/vdf
+          pushd ${GITHUB_WORKSPACE}/crates/bls48581
+          uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/vdf/src/lib.udl -o ${GITHUB_WORKSPACE}/vdf/generated
+          uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/bls48581/src/lib.udl -o ${GITHUB_WORKSPACE}/bls48581/generated
