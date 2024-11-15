@@ -36,4 +36,4 @@ jobs:
         if: steps.sync.outputs.has_new_commits == 'false'
         run: echo "no new commits were found to sync."
       -
-        run: echo "commits found: ${{ steps.sync.outputs.has_new_commits }}."
+        run: 'echo "commits found: ${{ steps.sync.outputs.has_new_commits }}."'
