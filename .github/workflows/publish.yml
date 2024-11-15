@@ -48,7 +48,13 @@ jobs:
           -
             os: ubuntu-latest
             arch: arm64
-            cc: CC=aarch64-linux-gnu-gcc CC_FOR_TARGET=gcc-aarch64-linux-gnu
+            go_arch_setup: |
+              export CC=aarch64-linux-gnu-gcc
+              export CC_FOR_TARGET=gcc-aarch64-linux-gnu
+            rust_arch_setup: |
+              export CC_aarch64_unknown_linux_musl=aarch64-linux-musl-gcc
+              export AR_aarch64_unknown_linux_musl=aarch64-linux-musl-ar
+              export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
         exclude:
           -
             os: macos-latest
@@ -91,11 +97,13 @@ jobs:
             uniffi-bindgen-go \
             --git https://github.com/NordSecurity/uniffi-bindgen-go \
             --tag v0.2.1+v0.25.0
+          cargo install atuin --target aarch64-unknown-linux-musl
       -
         name: rust builds
         env:
           RUSTFLAGS: ${{ matrix.rustflags }}
         run: |
+          ${{ matrix.rust_arch_setup }} 
           for crate in bls48581 vdf; do
             cargo build --package ${crate} --release
             pushd ${GITHUB_WORKSPACE}/crates/${crate}
@@ -109,7 +117,8 @@ jobs:
           GOOS: ${{ matrix.goos }}
         run: |
           pushd ${GITHUB_WORKSPACE}/node
-          ${{ matrix.cc }} go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
+          ${{ matrix.go_arch_setup }} 
+          go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
       -
         name: create digests
         run: |
