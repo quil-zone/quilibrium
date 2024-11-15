@@ -114,8 +114,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64
-            ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64.dgst
-            ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
-            ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64.dgst
+            ${{ github.workspace }}/quilibrium-${GIT_TAG}-darwin-arm64
+            ${{ github.workspace }}/quilibrium-${GIT_TAG}-darwin-arm64.dgst
+            ${{ github.workspace }}/quilibrium-${GIT_TAG}-linux-amd64
+            ${{ github.workspace }}/quilibrium-${GIT_TAG}-linux-amd64.dgst
           prerelease: true
