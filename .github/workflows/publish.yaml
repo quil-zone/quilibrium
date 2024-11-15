@@ -5,8 +5,22 @@ on:
     tags:
       - '*'
 jobs:
+  create-release:
+    name: create release
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: true
+          generate_release_notes: false
   artifact-build:
-    runs-on: ${{ matrix.os }}
+    name: artifact build
+    needs: create_release
     permissions:
       contents: write
     strategy:
@@ -15,6 +29,20 @@ jobs:
         os:
           - macos-latest
           - ubuntu-latest
+        include:
+          -
+            os: macos-latest
+            suffix: darwin-arm64
+            gmpinstall: brew install gmp
+            extldflags: -L${{ github.workspace }}/target/release -lvdf -lbls48581 -ldl -lm
+            rustflags: -L /opt/homebrew/Cellar/gmp/6.3.0/lib
+          -
+            os: ubuntu-latest
+            suffix: linux-amd64
+            gmpinstall: sudo apt-get install libgmp-dev
+            extldflags: -L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm
+            rustflags: -L /usr/lib/x86_64-linux-gnu
+    runs-on: ${{ matrix.os }}
     env:
       CARGO_TERM_COLOR: always
     steps:
@@ -45,40 +73,18 @@ jobs:
         with:
           go-version: '1.21.x'
       -
-        name: dependency setup for macos
-        if: matrix.os == 'macos-latest'
+        name: dependency setup
         run: |
-          brew install gmp
+          ${{ matrix.gmpinstall }}
           go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.1
           cargo install \
             uniffi-bindgen-go \
             --git https://github.com/NordSecurity/uniffi-bindgen-go \
             --tag v0.2.1+v0.25.0
       -
-        name: dependency setup for ubuntu
-        if: matrix.os == 'ubuntu-latest'
+        name: rust builds
         env:
-          RUSTFLAGS: -L /usr/lib/x86_64-linux-gnu
-        run: |
-          sudo apt-get install libgmp-dev
-          go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.1
-          cargo install \
-            uniffi-bindgen-go \
-            --git https://github.com/NordSecurity/uniffi-bindgen-go \
-            --tag v0.2.1+v0.25.0
-      -
-        name: rust builds for macos
-        if: matrix.os == 'macos-latest'
-        env:
-          RUSTFLAGS: -L /opt/homebrew/Cellar/gmp/6.3.0/lib
-        run: |
-          cargo build --package vdf --release
-          cargo build --package bls48581 --release
-      -
-        name: rust builds for ubuntu
-        if: matrix.os == 'ubuntu-latest'
-        env:
-          RUSTFLAGS: -L /usr/lib/x86_64-linux-gnu
+          RUSTFLAGS: ${{ matrix.rustflags }}
         run: |
           cargo build --package bls48581 --release
           cargo build --package vdf --release
@@ -93,33 +99,24 @@ jobs:
           pushd ${GITHUB_WORKSPACE}/crates/vdf
           uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/vdf/src/lib.udl -o ${GITHUB_WORKSPACE}/vdf/generated
       -
-        name: node build for macos
-        if: matrix.os == 'macos-latest'
+        name: node build
         env:
           CGO_ENABLED: 1
         run: |
           pushd ${GITHUB_WORKSPACE}/node
-          go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -lvdf -lbls48581 -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64
-          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-darwin-arm64
+          go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}
       -
-        name: node build for ubuntu
-        if: matrix.os == 'ubuntu-latest'
-        env:
-          CGO_ENABLED: 1
+        name: create digests
         run: |
-          pushd ${GITHUB_WORKSPACE}/node
-          go build -ldflags "-linkmode 'external' -extldflags '-L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
-          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-linux-amd64
-      -
-        name: debug build
-        run: |
+          pushd ${GITHUB_WORKSPACE}
           ls -ahl ${GITHUB_WORKSPACE}
-      - name: publish
+          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}
+          ls -ahl ${GITHUB_WORKSPACE}
+      -
+        name: publish
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.create_release.outputs.tag-name }}
           files: |
-            ${{ github.workspace }}/quilibrium-${GIT_TAG}-darwin-arm64
-            ${{ github.workspace }}/quilibrium-${GIT_TAG}-darwin-arm64.dgst
-            ${{ github.workspace }}/quilibrium-${GIT_TAG}-linux-amd64
-            ${{ github.workspace }}/quilibrium-${GIT_TAG}-linux-amd64.dgst
-          prerelease: true
+            ${{ github.workspace }}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}
+            ${{ github.workspace }}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}.dgst
