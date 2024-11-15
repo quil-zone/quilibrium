@@ -45,6 +45,10 @@ jobs:
             goos: linux
             extldflags: -L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm
             rustflags: -L /usr/lib/x86_64-linux-gnu
+          -
+            os: ubuntu-latest
+            arch: arm64
+            cc: CC=aarch64-linux-gnu-gcc CC_FOR_TARGET=gcc-aarch64-linux-gnu
         exclude:
           -
             os: macos-latest
@@ -105,7 +109,7 @@ jobs:
           GOOS: ${{ matrix.goos }}
         run: |
           pushd ${GITHUB_WORKSPACE}/node
-          go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
+          ${{ matrix.cc }} go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
       -
         name: create digests
         run: |
