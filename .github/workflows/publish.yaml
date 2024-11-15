@@ -37,12 +37,12 @@ jobs:
         include:
           -
             os: macos-latest
-            suffix: darwin
+            goos: darwin
             extldflags: -L${{ github.workspace }}/target/release -lvdf -lbls48581 -ldl -lm
             rustflags: -L /opt/homebrew/Cellar/gmp/6.3.0/lib
           -
             os: ubuntu-latest
-            suffix: linux
+            goos: linux
             extldflags: -L${GITHUB_WORKSPACE}/target/release -Wl,-Bstatic -lvdf -lbls48581 -Wl,-Bdynamic -ldl -lm
             rustflags: -L /usr/lib/x86_64-linux-gnu
         exclude:
@@ -108,15 +108,17 @@ jobs:
         name: node build
         env:
           CGO_ENABLED: 1
+          GOARCH=${{ matrix.arch }}
+          GOOS=${{ matrix.goos }}
         run: |
           pushd ${GITHUB_WORKSPACE}/node
-          go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}-${{ matrix.arch }}
+          go build -ldflags "-linkmode 'external' -extldflags '${{ matrix.extldflags }}'" -o ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
       -
         name: create digests
         run: |
           pushd ${GITHUB_WORKSPACE}
           ls -ahl ${GITHUB_WORKSPACE}
-          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}-${{ matrix.arch }}
+          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
           ls -ahl ${GITHUB_WORKSPACE}
       -
         name: publish
@@ -124,5 +126,5 @@ jobs:
         with:
           tag_name: ${{ needs.create_release.outputs.tag-name }}
           files: |
-            ${{ github.workspace }}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}-${{ matrix.arch }}
-            ${{ github.workspace }}/quilibrium-${GIT_TAG}-${{ matrix.suffix }}-${{ matrix.arch }}.dgst
+            ${{ github.workspace }}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
+            ${{ github.workspace }}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}.dgst
