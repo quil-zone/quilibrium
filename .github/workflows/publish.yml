@@ -93,11 +93,11 @@ jobs:
         name: dependency setup
         run: |
           go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.1
+          rustup target add aarch64-unknown-linux-musl
           cargo install \
             uniffi-bindgen-go \
             --git https://github.com/NordSecurity/uniffi-bindgen-go \
             --tag v0.2.1+v0.25.0
-          cargo install atuin --target aarch64-unknown-linux-musl
       -
         name: rust builds
         env:
