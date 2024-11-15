@@ -38,7 +38,7 @@ jobs:
           -
             os: macos-latest
             goos: darwin
-            extldflags: -L${{ github.workspace }}/target/release -lvdf -lbls48581 -ldl -lm
+            extldflags: -L${GITHUB_WORKSPACE}/target/release -lvdf -lbls48581 -ldl -lm
             rustflags: -L /opt/homebrew/Cellar/gmp/6.3.0/lib
           -
             os: ubuntu-latest
