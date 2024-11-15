@@ -118,7 +118,7 @@ jobs:
         run: |
           pushd ${GITHUB_WORKSPACE}
           ls -ahl ${GITHUB_WORKSPACE}
-          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
+          openssl sha3-256 -out ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}.dgst ${GITHUB_WORKSPACE}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
           ls -ahl ${GITHUB_WORKSPACE}
       -
         name: publish
@@ -126,5 +126,5 @@ jobs:
         with:
           tag_name: ${{ needs.create_release.outputs.tag-name }}
           files: |
-            ${{ github.workspace }}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}
-            ${{ github.workspace }}/quilibrium-${GIT_TAG}-${{ matrix.goos }}-${{ matrix.arch }}.dgst
+            ${{ github.workspace }}/quilibrium-${{ needs.create_release.outputs.tag-name }}-${{ matrix.goos }}-${{ matrix.arch }}
+            ${{ github.workspace }}/quilibrium-${{ needs.create_release.outputs.tag-name }}-${{ matrix.goos }}-${{ matrix.arch }}.dgst
