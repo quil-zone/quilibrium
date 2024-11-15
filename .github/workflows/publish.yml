@@ -126,5 +126,5 @@ jobs:
         with:
           tag_name: ${{ needs.create_release.outputs.tag-name }}
           files: |
-            ${{ github.workspace }}/quilibrium-${{ needs.create_release.outputs.tag-name }}-${{ matrix.goos }}-${{ matrix.arch }}
-            ${{ github.workspace }}/quilibrium-${{ needs.create_release.outputs.tag-name }}-${{ matrix.goos }}-${{ matrix.arch }}.dgst
+            ${{ github.workspace }}/quilibrium-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.arch }}
+            ${{ github.workspace }}/quilibrium-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.arch }}.dgst
