@@ -1,0 +1,69 @@
+---
+name: publish
+on:
+  - push
+jobs:
+  artifact-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      -
+        name: source fetch
+        uses: actions/checkout@v4
+      -
+        name: go setup
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21.x'
+      -
+        name: dependency setup for macos
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install gmp
+          go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.1
+          cargo install \
+            uniffi-bindgen-go \
+            --git https://github.com/NordSecurity/uniffi-bindgen-go \
+            --tag v0.2.1+v0.25.0
+      -
+        name: dependency setup for ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          RUSTFLAGS: -L /usr/lib/x86_64-linux-gnu
+        run: |
+          sudo apt-get install libgmp-dev
+          go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.1
+          cargo install \
+            uniffi-bindgen-go \
+            --git https://github.com/NordSecurity/uniffi-bindgen-go \
+            --tag v0.2.1+v0.25.0
+      -
+        name: rust builds for macos
+        if: matrix.os == 'macos-latest'
+        env:
+          RUSTFLAGS: -L /opt/homebrew/Cellar/gmp/6.3.0/lib
+        run: |
+          cargo build --package vdf --release
+          cargo build --package bls48581 --release
+      -
+        name: rust builds for ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          RUSTFLAGS: -L /usr/lib/x86_64-linux-gnu
+        run: |
+          cargo build --package vdf --release
+          cargo build --package bls48581 --release
+      -
+        name: go bindings generation
+        run: |
+          pushd ./crates/vdf
+          pushd ./crates/bls48581
+          uniffi-bindgen-go ./crates/vdf/src/lib.udl -o ./vdf/generated
+          uniffi-bindgen-go ./crates/bls48581/src/lib.udl -o ./bls48581/generated
