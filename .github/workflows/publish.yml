@@ -78,6 +78,7 @@ jobs:
         name: linux arm64 cross compiler setup
         if: (matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64')
         run: |
+          sudo apt-get install gcc-aarch64-linux-gnu
           rustup target add aarch64-unknown-linux-musl
           echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=gcc-aarch64-linux-gnu" >> $GITHUB_ENV
