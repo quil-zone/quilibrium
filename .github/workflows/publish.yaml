@@ -26,7 +26,7 @@ jobs:
           echo "SHORT_GIT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)" >> $GITHUB_ENV
           echo "QUILIBRIUM_VERSION=$(cat ${GITHUB_WORKSPACE}/node/config/version.go | grep -A 1 'func GetVersion() \[\]byte {' | grep -Eo '0x[0-9a-fA-F]+' | xargs printf '%d.%d.%d')" >> $GITHUB_ENV
       -
-        name: log version
+        name: log tag and version
         run: |
           echo "git tag: ${GIT_TAG}"
           echo "short git sha: ${SHORT_GIT_SHA}"
