@@ -92,18 +92,11 @@ jobs:
         env:
           RUSTFLAGS: ${{ matrix.rustflags }}
         run: |
-          cargo build --package bls48581 --release
-          cargo build --package vdf --release
-      -
-        name: bls48581 go bindings generation
-        run: |
-          pushd ${GITHUB_WORKSPACE}/crates/bls48581
-          uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/bls48581/src/lib.udl -o ${GITHUB_WORKSPACE}/bls48581/generated
-      -
-        name: vdf go bindings generation
-        run: |
-          pushd ${GITHUB_WORKSPACE}/crates/vdf
-          uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/vdf/src/lib.udl -o ${GITHUB_WORKSPACE}/vdf/generated
+          for crate in bls48581 vdf; do
+            cargo build --package ${crate} --release
+            pushd ${GITHUB_WORKSPACE}/crates/${crate}
+            uniffi-bindgen-go ${GITHUB_WORKSPACE}/crates/${crate}/src/lib.udl -o ${GITHUB_WORKSPACE}/${crate}/generated
+          done
       -
         name: node build
         env:
